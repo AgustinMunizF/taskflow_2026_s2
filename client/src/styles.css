@@ -1,0 +1,315 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1c1c1c;
+  background: #f5f6f8;
+}
+
+a {
+  color: #1a56b8;
+}
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border: 1px solid #9aa0a6;
+  background: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid #9aa0a6;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #d9dce1;
+}
+
+.header-brand {
+  font-weight: 700;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+.header-user {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.main {
+  padding: 20px;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.page-narrow {
+  max-width: 380px;
+  margin: 40px auto;
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #d9dce1;
+  border-radius: 6px;
+}
+
+.form-inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.field span {
+  color: #4a4a4a;
+}
+
+.field-value {
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  color: #1a56b8;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #d9dce1;
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.card-title {
+  font-weight: 600;
+}
+
+.card-sub {
+  margin: 0;
+  width: 100%;
+  color: #5a5a5a;
+  font-size: 13px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #5a5a5a;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.board-column {
+  background: #eef0f3;
+  border: 1px solid #d9dce1;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.board-column-title {
+  font-size: 15px;
+  margin: 4px 0 10px;
+}
+
+.board-column-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.board-summary {
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.task-card {
+  background: #ffffff;
+  border: 1px solid #d0d3d8;
+  border-radius: 5px;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.task-card-title {
+  font-weight: 600;
+}
+
+.task-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #5a5a5a;
+}
+
+.section {
+  margin: 20px 0;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #d9dce1;
+  border-radius: 6px;
+}
+
+.section h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: #eef0f3;
+  border: 1px solid #d0d3d8;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.tag-chip button {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.comment-list,
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.comment-item {
+  border: 1px solid #e0e2e6;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.comment-item-body {
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+}
+
+.comment-item-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: #5a5a5a;
+}
+
+.history-item {
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.loading {
+  padding: 16px;
+  color: #4a4a4a;
+}
+
+.error {
+  padding: 10px 12px;
+  background: #fdecea;
+  border: 1px solid #f3b7b1;
+  border-radius: 4px;
+  color: #8a1c13;
+  font-size: 14px;
+}
+
+.empty {
+  padding: 12px;
+  color: #5a5a5a;
+  font-size: 14px;
+}

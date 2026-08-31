@@ -1,0 +1,133 @@
+// TaskFlow — modelo de datos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  passwordHash   String
+  name           String?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime  @default(now())
+
+  ownedProjects Project[]            @relation("ProjectOwner")
+  memberships   ProjectMember[]
+  assignedTasks Task[]               @relation("TaskAssignee")
+  comments      Comment[]
+  resetTokens   PasswordResetToken[]
+
+  @@map("users")
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  ownerId     Int
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User            @relation("ProjectOwner", fields: [ownerId], references: [id])
+  members ProjectMember[]
+  tasks   Task[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  userId    Int
+  role      String   @default("MEMBER") // OWNER | ADMIN | MEMBER
+  addedAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  status      String    @default("TODO") // TODO | IN_PROGRESS | DONE
+  priority    String    @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  assigneeId  Int?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  tags     TaskTag[]
+
+  @@index([projectId])
+  @@map("tasks")
+}
+model Comment {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  authorId  Int
+  body      String
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("comments")
+}
+
+model TaskHistory {
+  id         Int      @id @default(autoincrement())
+  taskId     Int
+  changedById Int
+  fromStatus String?
+  toStatus   String
+  changedAt  DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_history")
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String
+  tasks TaskTag[]
+
+  @@map("tags")
+}
+
+model TaskTag {
+  id     Int @id @default(autoincrement())
+  taskId Int
+  tagId  Int
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@map("task_tags")
+}
+
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}

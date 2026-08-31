@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.db
+*.db-journal
+.env
+server/tests/.tmp/
+.DS_Store
