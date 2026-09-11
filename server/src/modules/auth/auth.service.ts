@@ -3,17 +3,8 @@ import crypto from 'crypto';
 import { db } from '../../lib/db';
 import { badRequest, conflict, notFound, unauthorized } from '../../lib/http';
 import { toPublicId } from '../../lib/ids';
-import { assertPassword, normalizeEmail } from '../../lib/validation';
+import { assertEmail, assertPassword, normalizeEmail } from '../../lib/validation';
 import { signToken } from '../../middleware/auth';
-
-const EMAIL_PATTERN = /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-function checkEmail(email: unknown): string {
-  if (typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim())) {
-    throw badRequest('Email must be a valid address');
-  }
-  return normalizeEmail(email);
-}
 
 export interface PublicUser {
   id: string;
@@ -37,7 +28,7 @@ export function serializeUser(u: {
 }
 
 export async function register(body: Record<string, unknown>) {
-  const email = checkEmail(body.email);
+  const email = assertEmail(body.email);
   const password = assertPassword(body.password);
   const name = typeof body.name === 'string' ? body.name.trim() : null;
 
@@ -87,7 +78,7 @@ export async function login(body: Record<string, unknown>) {
 }
 
 export async function forgotPassword(body: Record<string, unknown>) {
-  const email = checkEmail(body.email);
+  const email = assertEmail(body.email);
 
   const user = await db.user.findUnique({ where: { email } });
   if (!user) throw notFound('No account found for that email');

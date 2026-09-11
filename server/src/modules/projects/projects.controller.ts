@@ -2,9 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { db } from '../../lib/db';
 import { badRequest, conflict, forbidden, notFound } from '../../lib/http';
 import { parsePublicId, toPublicId } from '../../lib/ids';
-import { assertOptionalString } from '../../lib/validation';
-
-const EMAIL_CHECK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { assertEmail, assertOptionalString } from '../../lib/validation';
 
 function serialize(p: {
   id: number;
@@ -140,8 +138,7 @@ export async function addMember(req: Request, res: Response, next: NextFunction)
     if (!project) throw notFound('Project not found');
     if (project.ownerId !== userId) throw forbidden('Only the project owner can manage members');
 
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-    if (!EMAIL_CHECK.test(email)) throw badRequest('email must be a valid address');
+    const email = assertEmail(req.body?.email);
 
     const user = await db.user.findUnique({ where: { email } });
     if (!user) throw notFound('No user found with that email');
