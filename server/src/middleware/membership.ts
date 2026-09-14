@@ -47,6 +47,55 @@ export function requireProjectMember(paramName = 'projectId') {
   };
 }
 
+export interface ProjectOwnerOptions {
+  /**
+   * Cuando es true, a quien no es miembro se le responde 404 en lugar de 403:
+   * no debe enterarse de que el proyecto existe.
+   */
+  hideExistence?: boolean;
+  paramName?: string;
+}
+
+/**
+ * Verifica que el usuario autenticado sea el dueño del proyecto en :projectId.
+ *
+ * La especificación define dos respuestas distintas para el no-dueño, según
+ * el recurso, y por eso la regla es un parámetro y no una constante:
+ *   - US-09, criterio 7: editar un proyecto inexistente o ajeno devuelve 404,
+ *     y el miembro no dueño, 403  -> hideExistence: true
+ *   - US-11, criterio 1: en la gestión de miembros, cualquier usuario que no
+ *     sea el dueño recibe 403     -> hideExistence: false (default)
+ */
+export function requireProjectOwner({
+  hideExistence = false,
+  paramName = 'projectId',
+}: ProjectOwnerOptions = {}) {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        next(unauthorized());
+        return;
+      }
+      const userId = req.user.userId;
+      const projectId = parsePublicId(req.params[paramName], 'proj');
+
+      if (projectId !== null && (await isOwner(userId, projectId))) {
+        next();
+        return;
+      }
+
+      if (hideExistence && (projectId === null || !(await isMember(userId, projectId)))) {
+        next(notFound('Project not found'));
+        return;
+      }
+
+      next(forbidden('Only the project owner can perform this action'));
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 /** Verifica membresía a partir de una tarea (:taskId). */
 export function requireTaskProjectMember(paramName = 'taskId') {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
