@@ -31,11 +31,38 @@ export function buildFilters(projectId: number, f: TaskFilters): Prisma.TaskWher
   return where;
 }
 
-export async function findTasks(projectId: number, f: TaskFilters) {
+/** Página pedida por el cliente. Si no viene, se devuelven todas las filas. */
+export interface TaskPage {
+  limit: number;
+  offset: number;
+}
+
+/** Trae la página de tareas con su responsable ya resuelto, en una sola consulta. */
+export async function findTasks(projectId: number, f: TaskFilters, page?: TaskPage) {
   return db.task.findMany({
     where: buildFilters(projectId, f),
     orderBy: { id: 'asc' },
+    include: { assignee: true },
+    take: page?.limit,
+    skip: page?.offset,
   });
+}
+
+/**
+ * Cuenta los comentarios de varias tareas de una sola vez.
+ * Comment no declara relación con Task en el schema, así que no se puede
+ * usar _count desde findTasks(); este groupBy cumple la misma función.
+ */
+export async function countCommentsByTask(taskIds: number[]): Promise<Map<number, number>> {
+  if (taskIds.length === 0) return new Map();
+
+  const rows = await db.comment.groupBy({
+    by: ['taskId'],
+    where: { taskId: { in: taskIds } },
+    _count: { _all: true },
+  });
+
+  return new Map(rows.map((r) => [r.taskId, r._count._all]));
 }
 
 export async function countTasks(projectId: number, f: TaskFilters): Promise<number> {

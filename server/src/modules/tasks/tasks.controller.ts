@@ -8,6 +8,13 @@ import * as service from './tasks.service';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
+/** Lee un entero positivo de la query; si no es usable, devuelve el default. */
+function readPositiveInt(raw: unknown, fallback: number, max: number): number {
+  const n = Math.trunc(Number(raw));
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.min(n, max);
+}
+
 export async function listByProject(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const projectId = parsePublicId(req.params.projectId, 'proj');
@@ -24,26 +31,26 @@ export async function listByProject(req: Request, res: Response, next: NextFunct
       search: req.query.search ? String(req.query.search) : undefined,
     };
 
-    const limit = Math.min(Number(req.query.limit) || DEFAULT_LIMIT, MAX_LIMIT);
-    const offset = Number(req.query.offset) || 0;
+    const limit = Math.max(readPositiveInt(req.query.limit, DEFAULT_LIMIT, MAX_LIMIT), 1);
+    const offset = readPositiveInt(req.query.offset, 0, Number.MAX_SAFE_INTEGER);
 
-    const rows = await repo.findTasks(projectId, filters);
+    const [rows, total] = await Promise.all([
+      repo.findTasks(projectId, filters, { limit, offset }),
+      repo.countTasks(projectId, filters),
+    ]);
 
-    const items = [];
-    for (const row of rows) {
-      const assignee = row.assigneeId
-        ? await db.user.findUnique({ where: { id: row.assigneeId } })
-        : null;
-      const commentCount = await db.comment.count({ where: { taskId: row.id } });
-      items.push(
-        service.serializeTask(row as service.TaskRow, {
-          assignee: assignee ? { id: toPublicId('user', assignee.id), email: assignee.email } : null,
-          commentCount,
-        }),
-      );
-    }
+    const commentCounts = await repo.countCommentsByTask(rows.map((r) => r.id));
 
-    res.json({ items, total: rows.length, limit, offset });
+    const items = rows.map((row) =>
+      service.serializeTask(row, {
+        assignee: row.assignee
+          ? { id: toPublicId('user', row.assignee.id), email: row.assignee.email }
+          : null,
+        commentCount: commentCounts.get(row.id) ?? 0,
+      }),
+    );
+
+    res.json({ items, total, limit, offset });
   } catch (err) {
     next(err);
   }
