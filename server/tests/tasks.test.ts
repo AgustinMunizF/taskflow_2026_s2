@@ -120,4 +120,57 @@ describe('Tareas', () => {
     expect(res.body.items).toHaveLength(1);
     expect(res.body.items[0].title).toBe('Revisar informe mensual');
   });
+  it('pagina de verdad y devuelve el total real, no el largo de la pagina', async () => {
+    const { token } = await registerUser('task7@test.com');
+    const project = await createProject(token, 'Proyecto paginado');
+    for (const n of [1, 2, 3, 4, 5]) {
+      await createTask(token, project.id, { title: `Tarea numero ${n}` });
+    }
+
+    const primera = await request(app)
+      .get(`/api/projects/${project.id}/tasks?limit=2`)
+      .set(auth(token));
+
+    expect(primera.status).toBe(200);
+    expect(primera.body.items).toHaveLength(2);
+    expect(primera.body.total).toBe(5);
+    expect(primera.body.items[0].title).toBe('Tarea numero 1');
+
+    const segunda = await request(app)
+      .get(`/api/projects/${project.id}/tasks?limit=2&offset=2`)
+      .set(auth(token));
+
+    expect(segunda.body.items).toHaveLength(2);
+    expect(segunda.body.total).toBe(5);
+    expect(segunda.body.items[0].title).toBe('Tarea numero 3');
+  });
+
+  it('devuelve el responsable y el conteo de comentarios de cada tarea', async () => {
+    const { token, id } = await registerUser('task8@test.com');
+    const project = await createProject(token, 'Proyecto con comentarios');
+    const conComentarios = await createTask(token, project.id, {
+      title: 'Tarea comentada',
+      assigneeId: id,
+    });
+    await createTask(token, project.id, { title: 'Tarea sin comentar' });
+
+    for (const body of ['primero', 'segundo']) {
+      await request(app)
+        .post(`/api/tasks/${conComentarios.id}/comments`)
+        .set(auth(token))
+        .send({ body });
+    }
+
+    const res = await request(app).get(`/api/projects/${project.id}/tasks`).set(auth(token));
+
+    expect(res.status).toBe(200);
+    const comentada = res.body.items.find((t: { title: string }) => t.title === 'Tarea comentada');
+    const sinComentar = res.body.items.find(
+      (t: { title: string }) => t.title === 'Tarea sin comentar',
+    );
+    expect(comentada.commentCount).toBe(2);
+    expect(comentada.assignee.email).toBe('task8@test.com');
+    expect(sinComentar.commentCount).toBe(0);
+    expect(sinComentar.assignee).toBeNull();
+  });
 });
