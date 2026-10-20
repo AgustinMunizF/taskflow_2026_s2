@@ -22,10 +22,20 @@ export default defineConfig({
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // Dos servidores: la API primero. Si solo se espera al cliente, Vite levanta
+  // antes que Express y los primeros tests reciben un 500 del proxy.
+  webServer: [
+    {
+      command: 'npm run dev:server',
+      url: 'http://localhost:3000/api/health',
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      command: 'npm run dev:client',
+      url: 'http://localhost:5173',
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+  ],
 });
