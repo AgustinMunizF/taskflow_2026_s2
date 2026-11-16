@@ -50,6 +50,9 @@ export function insertMember(projectId: number, userId: number, role: string) {
   return db.projectMember.create({ data: { projectId, userId, role } });
 }
 
-export function removeMemberById(id: number) {
-  return db.projectMember.delete({ where: { id } });
+export function removeMember(projectId: number, userId: number) {
+  return db.$transaction([
+    db.task.updateMany({ where: { projectId, assigneeId: userId }, data: { assigneeId: null } }),
+    db.projectMember.delete({ where: { projectId_userId: { projectId, userId } } }),
+  ]);
 }
