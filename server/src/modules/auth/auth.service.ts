@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { db } from '../../lib/db';
-import { badRequest, conflict, notFound, unauthorized } from '../../lib/http';
+import { badRequest, conflict, unauthorized } from '../../lib/http';
 import { toPublicId } from '../../lib/ids';
 import { assertEmail, assertPassword, normalizeEmail } from '../../lib/validation';
 import { signToken } from '../../middleware/auth';
@@ -81,21 +81,19 @@ export async function forgotPassword(body: Record<string, unknown>) {
   const email = assertEmail(body.email);
 
   const user = await db.user.findUnique({ where: { email } });
-  if (!user) throw notFound('No account found for that email');
-
-  await db.passwordResetToken.updateMany({
-    where: { userId: user.id, usedAt: null },
-    data: { usedAt: new Date() },
-  });
-
   const token = crypto.randomBytes(24).toString('hex');
-  await db.passwordResetToken.create({
-    data: {
-      userId: user.id,
-      token,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    },
-  });
+  if (user) {
+    const now = new Date();
+    await db.$transaction([
+      db.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: now },
+      }),
+      db.passwordResetToken.create({
+        data: { userId: user.id, token, expiresAt: new Date(now.getTime() + 60 * 60 * 1000) },
+      }),
+    ]);
+  }
 
   // No hay servicio de email en el proyecto: el token se devuelve en la respuesta.
   return { message: 'Password reset requested', token };
@@ -106,15 +104,22 @@ export async function resetPassword(body: Record<string, unknown>) {
   const newPassword = assertPassword(body.newPassword);
 
   const record = await db.passwordResetToken.findUnique({ where: { token } });
-  if (!record) throw badRequest('Invalid or expired reset token');
+  if (!record || record.usedAt || record.expiresAt.getTime() <= Date.now()) {
+    throw badRequest('Invalid or expired reset token');
+  }
 
-  await db.user.update({
-    where: { id: record.userId },
-    data: {
-      passwordHash: await bcrypt.hash(newPassword, 10),
-      failedAttempts: 0,
-      lockedUntil: null,
-    },
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await db.$transaction(async (tx) => {
+    const now = new Date();
+    const consumed = await tx.passwordResetToken.updateMany({
+      where: { token, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now },
+    });
+    if (!consumed.count) throw badRequest('Invalid or expired reset token');
+    await tx.user.update({
+      where: { id: record.userId },
+      data: { passwordHash, failedAttempts: 0, lockedUntil: null },
+    });
   });
 
   return { message: 'Password updated' };

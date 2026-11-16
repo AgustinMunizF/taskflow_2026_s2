@@ -147,13 +147,13 @@ describe('Auth', () => {
     expect(login.status).toBe(200);
   });
 
-  it('rechaza recuperar una cuenta inexistente y un token inválido', async () => {
+  it('responde de forma genérica para una cuenta inexistente y rechaza tokens inválidos', async () => {
     const forgot = await request(app)
       .post('/api/auth/forgot-password')
       .send({ email: 'missing-reset@test.com' });
 
-    expect(forgot.status).toBe(404);
-    expect(forgot.body.error.message).toBe('No account found for that email');
+    expect(forgot.status).toBe(200);
+    expect(forgot.body).toEqual({ message: 'Password reset requested', token: expect.any(String) });
 
     const reset = await request(app)
       .post('/api/auth/reset-password')
