@@ -9,3 +9,4 @@ server/tests/.tmp/
 playwright-report/
 test-results/
 .test-dbs/
+performance/results/
