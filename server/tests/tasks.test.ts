@@ -173,4 +173,51 @@ describe('Tareas', () => {
     expect(sinComentar.commentCount).toBe(0);
     expect(sinComentar.assignee).toBeNull();
   });
+
+  it('impide que un usuario ajeno vea o modifique tareas de otro proyecto', async () => {
+    const owner = await registerUser('owner@test.com');
+    const atacante = await registerUser('atacante@test.com');
+    const project = await createProject(owner.token, 'Proyecto privado');
+    const task = await createTask(owner.token, project.id, { title: 'Tarea secreta' });
+
+    // Intentar leer tareas del proyecto ajeno
+    const getRes = await request(app)
+      .get(`/api/projects/${project.id}/tasks`)
+      .set(auth(atacante.token));
+    expect([403, 404]).toContain(getRes.status);
+
+    // Intentar modificar la tarea ajena
+    const patchRes = await request(app)
+      .patch(`/api/tasks/${task.id}`)
+      .set(auth(atacante.token))
+      .send({ status: 'DONE' });
+    expect([403, 404]).toContain(patchRes.status);
+  });
+
+  it('rechaza peticiones sin token de autenticacion', async () => {
+    const { token } = await registerUser('noauth@test.com');
+    const project = await createProject(token, 'Proyecto protegido');
+
+    const res = await request(app).get(`/api/projects/${project.id}/tasks`);
+    expect(res.status).toBe(401);
+  });
+
+  it('valida campos obligatorios y valores permitidos al crear o editar', async () => {
+    const { token } = await registerUser('validacion@test.com');
+    const project = await createProject(token, 'Proyecto validaciones');
+
+    // Sin titulo
+    const sinTitulo = await request(app)
+      .post(`/api/projects/${project.id}/tasks`)
+      .set(auth(token))
+      .send({ priority: 'HIGH' });
+    expect(sinTitulo.status).toBe(400);
+
+    // Prioridad invalida
+    const prioridadInvalida = await request(app)
+      .post(`/api/projects/${project.id}/tasks`)
+      .set(auth(token))
+      .send({ title: 'Tarea test', priority: 'URGENTISIMA' });
+    expect(prioridadInvalida.status).toBe(400);
+  });
 });
