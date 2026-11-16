@@ -103,7 +103,7 @@ model TaskHistory {
 
 model Tag {
   id    Int       @id @default(autoincrement())
-  name  String
+  name  String    @unique
   tasks TaskTag[]
 
   @@map("tags")
@@ -116,6 +116,7 @@ model TaskTag {
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@unique([taskId, tagId])
   @@map("task_tags")
 }
 
