@@ -104,5 +104,5 @@ export async function removeMember(projectId: number, memberId: number): Promise
   const membership = await repo.findMember(projectId, memberId);
   if (!membership) throw notFound('User is not a member of this project');
 
-  await repo.removeMemberById(membership.id);
+  await repo.removeMember(projectId, memberId);
 }
