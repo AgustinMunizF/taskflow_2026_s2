@@ -169,4 +169,66 @@ describe('Auth', () => {
     expect(missingToken.status).toBe(400);
     expect(missingToken.body.error.message).toBe('Invalid or expired reset token');
   });
+
+  it('impide reutilizar un token de restablecimiento de contraseña ya usado', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'reuse-token@test.com', password: 'Password1' });
+
+    const forgot = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'reuse-token@test.com' });
+
+    // Primer uso válido
+    const firstReset = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: forgot.body.token, newPassword: 'NewPassword2' });
+    expect(firstReset.status).toBe(200);
+
+    // Segundo uso del mismo token debe ser rechazado
+    const secondReset = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: forgot.body.token, newPassword: 'AnotherPassword3' });
+    expect(secondReset.status).toBe(400);
+    expect(secondReset.body.error.message).toBe('Invalid or expired reset token');
+  });
+
+  it('rechaza una nueva contraseña débil al restablecer', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'weak-reset@test.com', password: 'Password1' });
+
+    const forgot = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'weak-reset@test.com' });
+
+    const reset = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: forgot.body.token, newPassword: 'weak' });
+
+    expect(reset.status).toBe(400);
+    expect(reset.body.error.message).toBe(
+      'Password must be at least 8 characters and include a number and an uppercase letter',
+    );
+  });
+
+  it('no expone la contraseña ni el hash en la respuesta de registro ni login', async () => {
+    const registerRes = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'no-leak@test.com', password: 'Password1', name: 'Safe User' });
+
+    expect(registerRes.status).toBe(201);
+    expect(registerRes.body.user).not.toHaveProperty('password');
+    expect(registerRes.body.user).not.toHaveProperty('passwordHash');
+
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'no-leak@test.com', password: 'Password1' });
+
+    expect(loginRes.status).toBe(200);
+    if (loginRes.body.user) {
+      expect(loginRes.body.user).not.toHaveProperty('password');
+      expect(loginRes.body.user).not.toHaveProperty('passwordHash');
+    }
+  });
 });
