@@ -13,8 +13,7 @@ describe('Recuperacion de contrasena y bloqueo de cuenta', () => {
   });
 
   // US-17 CA2: la respuesta tiene que ser identica exista o no el usuario.
-  // Hoy devuelve 404 y revela que direcciones estan registradas. Ver issue de US-17 CA2.
-  it.failing('US-17 CA2: no revela si el email esta registrado', async () => {
+  it('US-17 CA2: no revela si el email esta registrado', async () => {
     const registrado = 'recovery-identica@test.com';
     await registerUser(registrado);
 
@@ -79,8 +78,7 @@ describe('Recuperacion de contrasena y bloqueo de cuenta', () => {
   });
 
   // US-17 CA3 y CA5: el token es de un solo uso; reutilizarlo devuelve 400.
-  // Hoy resetPassword no marca el token como usado ni lo verifica. Ver issue de US-17 CA5.
-  it.failing('US-17 CA5: un token ya utilizado no se puede reutilizar', async () => {
+  it('US-17 CA5: un token ya utilizado no se puede reutilizar', async () => {
     const email = 'recovery-reuso@test.com';
     await registerUser(email);
     const forgot = await request(app).post('/api/auth/forgot-password').send({ email });
@@ -99,7 +97,7 @@ describe('Recuperacion de contrasena y bloqueo de cuenta', () => {
   // US-17 CA4 y CA5: el token expira a los 60 minutos.
   // El vencimiento se prepara en la base porque la API no ofrece ese camino; lo que se
   // verifica sigue pasando por la API. Ver issue de US-17 CA4.
-  it.failing('US-17 CA4: un token vencido no sirve', async () => {
+  it('US-17 CA4: un token vencido no sirve', async () => {
     const email = 'recovery-vencido@test.com';
     await registerUser(email);
     const forgot = await request(app).post('/api/auth/forgot-password').send({ email });
@@ -118,8 +116,7 @@ describe('Recuperacion de contrasena y bloqueo de cuenta', () => {
   });
 
   // US-01 CA3: "La contrasena debe tener minimo 8 caracteres".
-  // assertPassword exige length >= 7 mientras su propio mensaje habla de 8. Ver issue de US-01 CA3.
-  it.failing('US-01 CA3: rechaza una contrasena de 7 caracteres', async () => {
+  it('US-01 CA3: rechaza una contrasena de 7 caracteres', async () => {
     const res = await request(app)
       .post('/api/auth/register')
       .send({ email: 'password-corta@test.com', password: 'Abcde19' }); // 7 caracteres, con numero y mayuscula
