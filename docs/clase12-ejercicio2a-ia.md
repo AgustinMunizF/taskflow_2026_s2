@@ -100,10 +100,11 @@ Solo el código, sin explicaciones.
 ## Observaciones sobre los tests de la IA
 
 - **No alucinó.** Usó solo los endpoints y helpers del prompt y no inventó reglas.
-- **CA3 no prueba lo que dice.** Cambia `process.env.TZ` entre pedidos para simular zonas horarias
-  distintas, pero el cambio no llega al servidor: en la primera vuelta, con UTC+14, donde el bug no
-  debería notarse, la fecha igual volvió corrida. El test detecta el defecto solo porque la máquina
-  está en UTC-3; en una máquina en UTC pasaría en verde.
+- **CA3 solo prueba lo que dice en Linux.** Cambia `process.env.TZ` entre pedidos para simular
+  zonas horarias distintas. En Windows, Node ignora ese cambio: en la primera vuelta, con UTC+14,
+  donde el bug no debería notarse, la fecha igual volvió corrida. En Windows el test detecta el
+  defecto solo porque la máquina está en UTC-3. En Linux, que es donde corre el CI, el cambio sí
+  tiene efecto y el test detecta el defecto aunque la máquina esté en UTC.
 - **Los tests no aíslan su criterio.** CA6 y CA7 verifican bien su regla, pero también comparan el
   valor exacto de la fecha, así que el bug de CA3 los pone en rojo. Un rojo en CA6 sugiere que la
   validación de formato falla, cuando en realidad funciona.
@@ -126,7 +127,7 @@ fecha, y en `tasks.service.ts` (ramas de 67,3 % a 71,15 %).
 La IA cubrió los 8 criterios sin alucinar, y sus tests encontraron los dos defectos reales de la
 historia. Pero la cantidad de rojos exagera el problema: 6 tests rojos son 2 bugs, porque los tests
 mezclan su criterio con la verificación del valor de la fecha. Y el test diseñado específicamente para
-la zona horaria no hace lo que promete.
+la zona horaria solo hace lo que promete en Linux.
 
 Los tests en rojo no se corrigieron, como pide la consigna.
 
@@ -158,21 +159,21 @@ Se le pasó a la misma IA, en la misma conversación, este segundo prompt:
 
 ## Resultado
 
-| Test                                         | Resultado | Categoría           | Motivo                                                     |
-| -------------------------------------------- | --------- | ------------------- | ---------------------------------------------------------- |
-| CA3 · precondición de zona horaria           | Rojo      | Test mal escrito \* | Los 3 offsets dieron igual: cambiar `TZ` no tiene efecto   |
-| CA3 · horario de verano y 29 de febrero      | Rojo      | Bug real            | Zona horaria: `2026-03-08` vuelve `2026-03-07`             |
-| CA3 · crear, modificar y leer en otras zonas | Rojo      | Bug real            | Zona horaria: `2026-01-01` vuelve `2025-12-31`             |
-| CA4 · crear con `dueDate: null`              | Verde     | Verde y correcto    |                                                            |
-| CA5 · quitar fecha a tarea sin fecha         | Verde     | Verde y correcto    |                                                            |
-| CA5 · quitar y volver a asignar              | Rojo      | Bug real            | Zona horaria: `2026-11-20` vuelve `2026-11-19`             |
-| CA6 · fechas inexistentes                    | Rojo      | Bug real (nuevo)    | `2026-09-31` se acepta con 201                             |
-| CA6 · valores que no son texto               | Rojo      | Bug real            | Los 5 dieron 400; falla al releer la fecha por zona horaria |
-| CA8 · no miembro crea tarea con fecha        | Verde     | Verde y correcto    |                                                            |
-| CA8 · el 403 no devuelve la tarea            | Rojo      | Bug real            | SEC-01: el PATCH de un no miembro da 200                   |
+| Test                                         | Resultado | Categoría           | Motivo                                                       |
+| -------------------------------------------- | --------- | ------------------- | ------------------------------------------------------------ |
+| CA3 · precondición de zona horaria           | Rojo      | Test mal escrito \* | Los 3 offsets dieron igual: Windows ignora el cambio de `TZ` |
+| CA3 · horario de verano y 29 de febrero      | Rojo      | Bug real            | Zona horaria: `2026-03-08` vuelve `2026-03-07`               |
+| CA3 · crear, modificar y leer en otras zonas | Rojo      | Bug real            | Zona horaria: `2026-01-01` vuelve `2025-12-31`               |
+| CA4 · crear con `dueDate: null`              | Verde     | Verde y correcto    |                                                              |
+| CA5 · quitar fecha a tarea sin fecha         | Verde     | Verde y correcto    |                                                              |
+| CA5 · quitar y volver a asignar              | Rojo      | Bug real            | Zona horaria: `2026-11-20` vuelve `2026-11-19`               |
+| CA6 · fechas inexistentes                    | Rojo      | Bug real (nuevo)    | `2026-09-31` se acepta con 201                               |
+| CA6 · valores que no son texto               | Rojo      | Bug real            | Los 5 dieron 400; falla al releer la fecha por zona horaria  |
+| CA8 · no miembro crea tarea con fecha        | Verde     | Verde y correcto    |                                                              |
+| CA8 · el 403 no devuelve la tarea            | Rojo      | Bug real            | SEC-01: el PATCH de un no miembro da 200                     |
 
 \* El test no tiene un error: hace bien su trabajo, que es avisar que la técnica de CA3 no funciona en
-este entorno. Se clasifica así porque el rojo no viene de la app.
+Windows. Se clasifica así porque el rojo no viene de la app. En Linux pasaría en verde.
 
 | Categoría                   | 2a  | 2b  |
 | --------------------------- | --- | --- |
@@ -202,8 +203,9 @@ en los issues de la clase 7.
 
 Sí, aunque la cobertura casi no se movió. La revisión encontró un defecto que el 2a no había visto
 (fechas inexistentes), cubrió dos criterios que habían quedado a medias (CA4 con `null` y CA8 al
-crear) y demostró con un test lo que en el 2a era solo una sospecha: cambiar `process.env.TZ` no simula
-otra zona horaria, así que la parte de zonas de CA3 no prueba nada en ninguna de las dos versiones.
+crear) y agregó un test de precondición que avisa cuando cambiar `process.env.TZ` no simula otra zona
+horaria. Gracias a ese test se ve que en Windows la parte de zonas de CA3 no prueba nada, en ninguna
+de las dos versiones; en Linux, donde corre el CI, sí funciona.
 
 Lo que no mejoró: los tests siguen sin aislar su criterio. CA5 y CA6 vuelven a salir en rojo por el
 bug de zona horaria y no por su propia regla. Y CA7 sigue cubierto a medias, aunque esta vez la IA lo
