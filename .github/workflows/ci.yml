@@ -112,3 +112,42 @@ jobs:
         run: npm ci
       - name: Compilar el cliente
         run: npm run build:client
+
+  e2e:
+    name: E2E (Playwright Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Base descartable del runner; no utiliza la base de desarrollo local.
+      DATABASE_URL: file:./e2e-ci.db
+      JWT_SECRET: taskflow-e2e-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+            client/package-lock.json
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Instalar Chromium y dependencias del sistema
+        run: npx playwright install --with-deps chromium
+      - name: Preparar la base de datos de E2E
+        run: npm run db:reset
+      # webServer en playwright.config.ts ejecuta dev:server y dev:client,
+      # y espera a /api/health y al frontend antes de iniciar los tests.
+      - name: Levantar la app y ejecutar Playwright
+        run: npx playwright test --project=chromium --trace=on
+      - name: Guardar reporte y traces
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14
