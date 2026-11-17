@@ -238,3 +238,18 @@ El título va en el campo de título y el resto en el cuerpo; la severidad se ca
 **Sospecha:** `assertPassword` en `lib/validation.ts` valida `length >= 7` mientras su mensaje de error dice "at least 8 characters". La misma función valida el registro y el reseteo, así que afecta a US-01 CA3 y a US-17 CA7.
 
 **Severidad:** media · **Prioridad:** media
+
+## Seguimiento en GitHub
+
+| Hallazgo | Ticket | Estado |
+| --- | --- | --- |
+| 1 | [#17](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/17) | Abierto |
+| 2 | [#18](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/18) | Cerrado por PR #14 |
+| 3 | [#19](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/19) | Cerrado por PR #14 |
+| 4 | [#20](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/20) | Cerrado por PR #14 |
+| 5 | [#21](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/21) | Abierto |
+| 6 | [#22](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/22) | Abierto |
+| 7 | [#23](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/23) | Abierto |
+| 8 | [#24](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/24) | Cerrado por PR #13 |
+| 9 | [#25](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/25) | Cerrado por PR #13 |
+| 10 | [#26](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/26) | Cerrado por PR #13 |

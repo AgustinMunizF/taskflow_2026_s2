@@ -82,3 +82,7 @@ Se agrava porque el cliente lo llama todo el tiempo: para mostrar **un** proyect
 de 42 KB viaja en cada navegación.
 
 **Severidad:** media · **Prioridad:** media
+
+## Seguimiento
+
+Ticket abierto de severidad media: [#27](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/27).

@@ -20,6 +20,7 @@ async function sumarMiembroPorUI(page: Page, proyectoId: string, miembro: Usuari
 test.describe('US-14 · Asignar tarea a un miembro', () => {
   test('caso feliz · asignar la tarea a un miembro se ve en el tablero (CA1)', async ({
     request,
+    owner,
     sesion,
     proyecto,
     tarea,
@@ -37,6 +38,7 @@ test.describe('US-14 · Asignar tarea a un miembro', () => {
 
     const tablero = new BoardPage(sesion);
     await tablero.ir(proyecto.id);
+    await expect(tablero.encabezado.emailUsuario).toHaveText(owner.email);
     await expect(tablero.asignadoDe(tarea.title)).toHaveText(miembro.email);
   });
 
