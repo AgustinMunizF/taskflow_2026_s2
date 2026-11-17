@@ -1,17 +1,18 @@
 import { Locator } from '@playwright/test';
 
+/** Componente compartido del encabezado autenticado. */
 export class AppHeader {
-  constructor(readonly root: Locator) {}
+  constructor(private readonly locator: Locator) {}
 
-  get email(): Locator {
-    return this.root.getByTestId('header-user-email');
+  get inicio(): Locator {
+    return this.locator.getByTestId('header-home-link');
   }
 
-  async irAProyectos(): Promise<void> {
-    await this.root.getByTestId('header-home-link').click();
+  get emailUsuario(): Locator {
+    return this.locator.getByTestId('header-user-email');
   }
 
-  async salir(): Promise<void> {
-    await this.root.getByTestId('logout-button').click();
+  get salir(): Locator {
+    return this.locator.getByTestId('logout-button');
   }
 }

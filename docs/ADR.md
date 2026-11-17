@@ -1,99 +1,104 @@
 # ADR: Arquitectura del framework de testing E2E con Playwright
 
-**Estado:** Aceptada (22/09/2026)
-**Equipo:** TaskFlow — Testing y Calidad de Software 2026
+**Estado:** Aceptada
+**Equipo:** TaskFlow - Testing y Calidad de Software 2026
 
 ## Contexto
 
-TaskFlow tiene un cliente React (Vite, puerto 5173) y una API Express con Prisma y
-SQLite (puerto 3000). Son cinco pantallas y cuatro recursos de API.
+TaskFlow tiene un cliente React con Vite en el puerto 5173 y una API Express con
+Prisma y SQLite en el puerto 3000. La suite automatizada existente cubre el backend
+con Jest y Supertest en `server/tests/`. Faltaba verificar los flujos desde la
+interfaz y la suite E2E debe correr de forma reproducible en CI.
 
-Lo único automatizado hasta ahora son los tests de Jest y Supertest en
-`server/tests/`, que solo cubren el backend. Nada verifica que los flujos funcionen
-desde la interfaz. El framework de Playwright lo armamos de cero, teniendo en cuenta
-que somos tres personas con un semestre por delante, que el frontend ya está hecho con
-componentes React y tiene unos cien `data-testid`, y que la suite tiene que correr en
-CI.
+El repositorio ya ofrece identificadores `data-testid` en el frontend. Playwright
+puede mantener los tests enfocados en comportamiento sin acoplarlos a clases CSS ni
+usar esperas manuales.
 
 ## Decisión
 
-### Carpetas por capa
+### Organización real del framework
 
 ```
 e2e/
-├── fixtures/        # usuarios, sesiones y datos creados por API
-├── page-objects/    # BoardPage, MembersPage, TaskDetailPage
-├── components/      # TaskCard y AppHeader
-└── tests/           # flujos UI, seguridad y accesibilidad
+├── fixtures/        # datos y sesión preparados para cada test
+├── page-objects/    # Page Objects de pantallas existentes
+├── components/      # Component Objects con Locator propio
+└── tests/           # casos E2E
 ```
 
-La configuración vive en `playwright.config.ts`. Los helpers de API y los datos
-de prueba se mantienen en `fixtures/taskflow.ts`, donde se usan.
+Esta estructura refleja lo implementado en el repositorio. No se agregan carpetas
+`api/`, `config/` ni `test-data/` porque no existen como capas separadas; los datos,
+tokens y llamadas HTTP se encuentran en `e2e/fixtures/taskflow.ts`.
 
+### Patrones implementados
 
-### Qué patrón usamos y dónde
-
-| Patrón | Dónde | Por qué |
+| Patrón | Implementación real | Uso |
 | --- | --- | --- |
-| Page Object | `BoardPage`, `MembersPage`, `TaskDetailPage` | Una clase por pantalla. Tienen lógica propia y poca repetición entre sí |
-| Component Object | `AppHeader`, `TaskCard` | Piezas que se repiten y que el frontend ya tiene como componentes |
-| Fixtures | `owner`, `sesion`, `proyecto`, `tarea` | Todos los tests necesitan estado previo, y acá se arma y se limpia solo |
-| Screenplay | No lo usamos | Es para frameworks grandes con varios equipos. Demasiado setup para este proyecto |
+| Page Object | `BoardPage`, `MembersPage`, `TaskDetailPage` | Encapsula navegación y acciones de las pantallas que existen |
+| Component Object | `TaskCard`, `AppHeader` | Recibe un `Locator` y expone una parte aislada de la interfaz |
+| Fixtures | `owner`, `ajeno`, `proyecto`, `tarea`, `sesion` | Prepara registros, proyectos y tareas por API |
+| Screenplay | No se usa | Introduciría setup innecesario para el tamaño actual del proyecto |
 
-`TaskCard` recibe un `Locator` que delimita una tarjeta. `BoardPage.tarjeta()`
-devuelve ese componente y delega en él las acciones y lecturas de sus campos.
-`AppHeader` recibe el locator del encabezado y expone el usuario y la navegación.
-El test de asignación comprueba el usuario conectado mediante este componente.
-Las aserciones permanecen en los tests.
+`TaskCard` recibe el `Locator` de una tarjeta concreta y permite apuntar a su título,
+asignado, vencimiento, prioridad y estado sin afectar otras tarjetas.
+`BoardPage.tarjeta(titulo)` crea la instancia correspondiente con ese scope.
+`AppHeader` encapsula los controles compartidos del encabezado autenticado.
+`BoardPage.encabezado` crea el componente y el test de asignación verifica con
+él el email de la sesión. Las aserciones permanecen en los tests.
+
+Las pantallas `LoginPage` y `ProjectsPage` figuran en la interfaz de TaskFlow, pero
+no tienen Page Object propio hoy. Solo se implementan objetos para las pantallas y
+componentes que usan la suite actual.
 
 ### Preparar por API, validar por UI
 
-Salvo los tests del login, ninguno se loguea por formulario: el fixture registra por
-`POST /api/auth/register` e inyecta el token con `storageState`. Los datos de cada
-caso también se crean por API. La idea es usar la interfaz para validar lo que estamos
-probando y no para armar el escenario, que además es mucho más rápido.
+Los fixtures crean usuarios con `POST /api/auth/register`, proyectos y tareas por
+los endpoints respectivos, y cargan el token en `localStorage` con `iniciarSesion`.
+Los tests usan la UI para verificar el flujo seleccionado y la API solo para preparar
+el estado cuando es necesario.
 
-Cada test crea datos con nombres únicos. La suite corre en serie
-(`fullyParallel: false`, `workers: 1`) porque comparte un archivo SQLite y
-la escritura concurrente puede bloquear la base.
-
-Los escenarios están directamente en `e2e/tests/`. Preparan los datos por API
-y verifican el comportamiento por UI. El login de esos escenarios se prepara
-mediante el fixture de sesión.
+Cada fixture usa datos únicos por registro. Esto evita compartir nombres o proyectos
+entre casos, aunque la ejecución permanece serial por restricciones de SQLite.
 
 ### Locators y aserciones
 
-El orden de preferencia es `getByRole`, `getByLabel`, `getByText` y, si nada de eso
-sirve, `getByTestId` sobre los `data-testid` que ya existen. Evitamos los selectores
-por clase de CSS o por posición en el DOM porque se rompen con cualquier cambio de
-estilos. Sin esperas manuales: Playwright ya espera solo antes de cada acción.
+La preferencia es `getByRole`, `getByLabel` y `getByText`; después se usa
+`getByTestId` sobre los identificadores existentes. Las aserciones permanecen en los
+tests y los Page/Component Objects solo contienen locators y acciones.
 
-Los Page Objects y Component Objects solo tienen locators y acciones. Las aserciones
-van en el test.
+Se evitan las esperas manuales y los selectores por posición. El selector de errores
+en `TaskDetailPage` todavía admite la clase `.error` junto con `role="alert"`.
 
-### CI
+### Configuración de ejecución
+
+La configuración real de `playwright.config.ts` es:
 
 ```ts
-retries: process.env.CI ? 2 : 0,
-workers: 1,
 fullyParallel: false,
-trace: 'on-first-retry',
-screenshot: 'only-on-failure',
-reporter: [['list'], ['html', { open: 'never' }]],
+workers: 1,
+retries: process.env.CI ? 2 : 0,
 ```
 
-Los reintentos se habilitan en CI. La configuración captura la trace en el primer
-reintento, si lo hay, y las screenshots ante fallos. El workflow fuerza `--trace=on` para
-guardar traces de la corrida, y publica el reporte HTML y `test-results/` como
-artefactos incluso cuando falla un test. Playwright inicia API y cliente y
-espera sus URLs antes de ejecutar la suite.
+La ejecución es serial porque las operaciones E2E comparten un único archivo SQLite,
+que admite un solo escritor concurrente y puede producir colisiones o estados
+cruzados si varias pruebas escriben a la vez. `workers: 1` hace la ejecución local y
+CI seriales.
+
+La configuración usa Chromium y levanta API y cliente mediante `webServer`.
+Espera a `/api/health` y a la URL del cliente antes de iniciar los tests.
+Produce reportes list y HTML, screenshots ante fallos y videos retenidos ante
+fallos. La trace se captura en el primer reintento, si lo hay.
+
+En CI, el workflow fuerza `--trace=on` y guarda `playwright-report/` y
+`test-results/` como artefactos incluso cuando falla la suite. Los reintentos
+deben revisarse para detectar tests inestables.
 
 ## Consecuencias
 
-A favor: si cambia un selector se corrige en un solo archivo, los tests se leen fácil,
-y preparar el estado por API mantiene la suite rápida.
+A favor: los objetos aíslan selectores, `BoardPage` usa tarjetas con scope propio,
+los fixtures permiten construir escenarios sin repetir llamadas HTTP y la suite no
+depende de datos compartidos entre tests.
 
-En contra: hay más archivos que en una suite plana y el primer test cuesta más de
-escribir. Además quedamos atados al contrato de la API, así que si cambia el endpoint
-de registro se rompe toda la suite. Y los reintentos de CI pueden tapar un test
-inestable, así que vamos a mirar los que pasan recién en el segundo intento.
+En contra: mantener POM y Component Objects agrega archivos y duplicar el contrato
+HTTP o los selectores puede requerir cambios coordinados. Además, SQLite limita la
+concurrencia y obliga a mantener `workers: 1`.

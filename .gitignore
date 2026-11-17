@@ -10,3 +10,6 @@ playwright-report/
 test-results/
 .test-dbs/
 performance/results/
+
+# Configuración local del editor
+.vscode/

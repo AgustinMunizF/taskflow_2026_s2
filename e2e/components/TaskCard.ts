@@ -1,19 +1,31 @@
 import { Locator } from '@playwright/test';
 
+/** Componente reutilizable para una tarjeta concreta del tablero. */
 export class TaskCard {
-  constructor(readonly root: Locator) {}
+  constructor(private readonly locator: Locator) {}
+
+  get root(): Locator {
+    return this.locator;
+  }
 
   get titulo(): Locator {
-    return this.root.getByTestId('task-card-title');
+    return this.locator.getByTestId('task-card-title');
   }
+
   get asignado(): Locator {
-    return this.root.getByTestId('task-card-assignee');
+    return this.locator.getByTestId('task-card-assignee');
   }
+
   get vencimiento(): Locator {
-    return this.root.getByTestId('task-card-duedate');
+    return this.locator.getByTestId('task-card-duedate');
   }
+
   get prioridad(): Locator {
-    return this.root.getByTestId('task-card-priority');
+    return this.locator.getByTestId('task-card-priority');
+  }
+
+  get estado(): Locator {
+    return this.locator.getByTestId('task-card-status-select');
   }
 
   async abrir(): Promise<void> {

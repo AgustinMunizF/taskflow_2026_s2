@@ -38,7 +38,7 @@ test.describe('US-14 · Asignar tarea a un miembro', () => {
 
     const tablero = new BoardPage(sesion);
     await tablero.ir(proyecto.id);
-    await expect(tablero.encabezado.email).toHaveText(owner.email);
+    await expect(tablero.encabezado.emailUsuario).toHaveText(owner.email);
     await expect(tablero.asignadoDe(tarea.title)).toHaveText(miembro.email);
   });
 
