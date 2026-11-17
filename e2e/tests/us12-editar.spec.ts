@@ -19,7 +19,7 @@ test.describe('US-12 · Editar tarea', () => {
 
     const tablero = new BoardPage(sesion);
     await tablero.ir(proyecto.id);
-    await expect(tablero.tarjeta('Implementar login con OAuth')).toHaveCount(1);
+    await expect(tablero.tarjeta('Implementar login con OAuth').root).toHaveCount(1);
     await expect(tablero.prioridadDe('Implementar login con OAuth')).toHaveText('HIGH');
   });
 
@@ -38,8 +38,8 @@ test.describe('US-12 · Editar tarea', () => {
 
     const tablero = new BoardPage(sesion);
     await tablero.ir(proyecto.id);
-    await expect(tablero.tarjeta(tarea.title)).toHaveCount(1);
-    await expect(tablero.tarjeta('ab')).toHaveCount(0);
+    await expect(tablero.tarjeta(tarea.title).root).toHaveCount(1);
+    await expect(tablero.tarjeta('ab').root).toHaveCount(0);
   });
 
   test('caso de borde · se acepta un titulo de exactamente 200 caracteres (CA2)', async ({
