@@ -239,32 +239,17 @@ El título va en el campo de título y el resto en el cuerpo; la severidad se ca
 
 **Severidad:** media · **Prioridad:** media
 
-## Estado para registrar los tickets
+## Seguimiento en GitHub
 
-Al 17/11/2026, la creación de issues mediante la API del repositorio devuelve
-`410 Gone`. Los bloques anteriores están preparados para registrar cada ticket
-con su etiqueta de severidad cuando esté disponible esa función.
-
-| Hallazgo | Estado verificado | Corrección |
+| Hallazgo | Ticket | Estado |
 | --- | --- | --- |
-| 1 · Vencimiento | Abierto | Pendiente |
-| 2 · Ex-miembro asignado | Corregido | PR #14 |
-| 3 · Etiqueta duplicada | Corregido | PR #14 |
-| 4 · Mayúsculas en etiquetas | Corregido | PR #14 |
-| 5 · Estado inicial | Abierto | Pendiente |
-| 6 · Edición ajena | Abierto | Pendiente |
-| 7 · Eliminación ajena | Abierto | Pendiente |
-| 8 · Token de recuperación | Corregido | PR #13 |
-| 9 · Enumeración de emails | Corregido | PR #13 |
-| 10 · Contraseña corta | Corregido | PR #13 |
-
-Referencias de las correcciones integradas:
-[PR #13](https://github.com/AgustinMunizF/taskflow_2026_s2/pull/13) y
-[PR #14](https://github.com/AgustinMunizF/taskflow_2026_s2/pull/14).
-Los reportes conservan las observaciones originales para mantener la evidencia
-histórica. Al crear los tickets de hallazgos corregidos, registrar el PR y cerrarlos
-con el motivo de resolución.
-
-Verificado el 17/11/2026 mediante la API del repositorio: `has_issues=false`.
-La cuenta conectada tiene permiso de escritura y triage, pero carece de administración.
-Un administrador debe habilitar **Settings → General → Features → Issues** antes de crear los tickets.
+| 1 | [#17](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/17) | Abierto |
+| 2 | [#18](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/18) | Cerrado por PR #14 |
+| 3 | [#19](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/19) | Cerrado por PR #14 |
+| 4 | [#20](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/20) | Cerrado por PR #14 |
+| 5 | [#21](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/21) | Abierto |
+| 6 | [#22](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/22) | Abierto |
+| 7 | [#23](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/23) | Abierto |
+| 8 | [#24](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/24) | Cerrado por PR #13 |
+| 9 | [#25](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/25) | Cerrado por PR #13 |
+| 10 | [#26](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/26) | Cerrado por PR #13 |

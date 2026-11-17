@@ -16,7 +16,7 @@ La fuente de verdad utilizada fue `taskflow_especificacion_requerimientos.docx`,
 
 Los reportes completos de la reproducción incluyen entorno, reproducibilidad,
 evidencia y severidad en [issues-clase7.md](issues-clase7.md). La sección de seguimiento
-de ese documento indica los PRs relacionados y los tickets pendientes de creación.
+de ese documento indica los PRs relacionados y los tickets registrados en GitHub.
 
 | Hallazgo | Reporte completo | Severidad |
 | --- | --- | --- |

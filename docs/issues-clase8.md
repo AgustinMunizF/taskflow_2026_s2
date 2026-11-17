@@ -85,10 +85,4 @@ de 42 KB viaja en cada navegación.
 
 ## Seguimiento
 
-Pendiente de registrar en GitHub Issues con severidad media. La creación de tickets
-mediante la API devuelve `410 Gone` al 17/11/2026. El bloque anterior contiene el
-reporte reproducible que debe acompañar el ticket.
-
-Verificado el 17/11/2026 mediante la API del repositorio: `has_issues=false`.
-La cuenta conectada tiene permiso de escritura y triage, pero carece de administración.
-Un administrador debe habilitar **Settings → General → Features → Issues** antes de crear los tickets.
+Ticket abierto de severidad media: [#27](https://github.com/AgustinMunizF/taskflow_2026_s2/issues/27).
