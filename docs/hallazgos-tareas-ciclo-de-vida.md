@@ -12,6 +12,18 @@ Se exploraron tres endpoints del módulo **Tareas - ciclo de vida**:
 
 La fuente de verdad utilizada fue `taskflow_especificacion_requerimientos.docx`, versión 1.0.
 
+## Evidencia y seguimiento
+
+Los reportes completos de la reproducción incluyen entorno, reproducibilidad,
+evidencia y severidad en [issues-clase7.md](issues-clase7.md). La sección de seguimiento
+de ese documento indica los PRs relacionados y los tickets pendientes de creación.
+
+| Hallazgo | Reporte completo | Severidad |
+| --- | --- | --- |
+| TF-TASK-001 · estado inicial forzado | Hallazgo 5 | Alta |
+| TF-TASK-002 · edición por usuario ajeno | Hallazgo 6 | Crítica |
+| TF-TASK-003 · eliminación por usuario ajeno | Hallazgo 7 | Crítica |
+
 ## Preparación en Postman
 
 1. Ejecutar la API en `http://localhost:3000`.

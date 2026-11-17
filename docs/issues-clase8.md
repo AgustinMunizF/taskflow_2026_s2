@@ -82,3 +82,9 @@ Se agrava porque el cliente lo llama todo el tiempo: para mostrar **un** proyect
 de 42 KB viaja en cada navegación.
 
 **Severidad:** media · **Prioridad:** media
+
+## Seguimiento
+
+Pendiente de registrar en GitHub Issues con severidad media. La creación de tickets
+mediante la API devuelve `410 Gone` al 17/11/2026. El bloque anterior contiene el
+reporte reproducible que debe acompañar el ticket.

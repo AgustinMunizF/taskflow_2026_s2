@@ -141,3 +141,31 @@ tareas **para** que nadie ajeno altere ni destruya el trabajo de mi equipo.
 - **CA-01:** `npx playwright test a11y` no reporta violaciones de la regla `label` en ninguna vista.
 - **CA-02:** el test de verificación de `a11y.spec.ts` pasa en verde.
 - **CA-03:** los `data-testid` no cambian y la suite E2E existente sigue dando los mismos resultados.
+
+### Seguridad (SEC-02)
+
+Como responsable de la aplicación quiero configurar las cabeceras y los orígenes
+permitidos para aplicar las defensas del navegador previstas para el despliegue.
+
+- CA-01. Las respuestas de la API incluyen `X-Content-Type-Options: nosniff` y omiten `X-Powered-By`.
+- CA-02. Un preflight desde el origen autorizado del cliente devuelve ese origen en `Access-Control-Allow-Origin`. Un origen ajeno carece de autorización CORS.
+- CA-03. En el despliegue HTTPS, las respuestas incluyen HSTS. La configuración se verifica sobre la URL HTTPS.
+- CA-04. Las respuestas HTML del cliente incluyen una política CSP y una política contra enmarcado, y los flujos de login y tareas siguen funcionando.
+
+### Accesibilidad (ACC-02)
+
+Como persona que navega con lector de pantalla quiero títulos específicos para
+identificar la pantalla y el proyecto que estoy usando.
+
+- CA-01. Login, Registro y Proyectos tienen títulos distintos que incluyen el nombre de la vista y TaskFlow.
+- CA-02. El tablero incluye el nombre del proyecto y el detalle incluye el título de la tarea en `document.title`.
+- CA-03. Al navegar sin recargar y al volver con el botón Atrás, el título corresponde a la vista mostrada.
+
+### Accesibilidad (ACC-03)
+
+Como persona que usa lector de pantalla quiero recibir confirmaciones de las
+acciones exitosas para saber que mis cambios se guardaron.
+
+- CA-01. Guardar una tarea actualiza una región con `role="status"` con una confirmación textual.
+- CA-02. Publicar un comentario y agregar o quitar un miembro actualizan esa región con un mensaje que identifica la operación.
+- CA-03. La confirmación se anuncia con lector de pantalla sin mover el foco. Si la solicitud falla, se anuncia el error y se omite la confirmación de éxito.

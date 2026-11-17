@@ -238,3 +238,29 @@ El título va en el campo de título y el resto en el cuerpo; la severidad se ca
 **Sospecha:** `assertPassword` en `lib/validation.ts` valida `length >= 7` mientras su mensaje de error dice "at least 8 characters". La misma función valida el registro y el reseteo, así que afecta a US-01 CA3 y a US-17 CA7.
 
 **Severidad:** media · **Prioridad:** media
+
+## Estado para registrar los tickets
+
+Al 17/11/2026, la creación de issues mediante la API del repositorio devuelve
+`410 Gone`. Los bloques anteriores están preparados para registrar cada ticket
+con su etiqueta de severidad cuando esté disponible esa función.
+
+| Hallazgo | Estado verificado | Corrección |
+| --- | --- | --- |
+| 1 · Vencimiento | Abierto | Pendiente |
+| 2 · Ex-miembro asignado | Corregido | PR #14 |
+| 3 · Etiqueta duplicada | Corregido | PR #14 |
+| 4 · Mayúsculas en etiquetas | Corregido | PR #14 |
+| 5 · Estado inicial | Abierto | Pendiente |
+| 6 · Edición ajena | Abierto | Pendiente |
+| 7 · Eliminación ajena | Abierto | Pendiente |
+| 8 · Token de recuperación | Corregido | PR #13 |
+| 9 · Enumeración de emails | Corregido | PR #13 |
+| 10 · Contraseña corta | Corregido | PR #13 |
+
+Referencias de las correcciones integradas:
+[PR #13](https://github.com/AgustinMunizF/taskflow_2026_s2/pull/13) y
+[PR #14](https://github.com/AgustinMunizF/taskflow_2026_s2/pull/14).
+Los reportes conservan las observaciones originales para mantener la evidencia
+histórica. Al crear los tickets de hallazgos corregidos, registrar el PR y cerrarlos
+con el motivo de resolución.

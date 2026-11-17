@@ -21,33 +21,30 @@ CI.
 
 ```
 e2e/
-├── config/          # entornos y constantes
-├── fixtures/        # arma y limpia el estado de cada test
-├── page-objects/    # pantallas completas (POM)
-├── components/      # piezas reutilizables (COM)
-├── api/             # clients y schemas
-├── tests/           # e2e, api, hybrid
-└── test-data/
+├── fixtures/        # usuarios, sesiones y datos creados por API
+├── page-objects/    # BoardPage, MembersPage, TaskDetailPage
+├── components/      # TaskCard y AppHeader
+└── tests/           # flujos UI, seguridad y accesibilidad
 ```
 
-Una carpeta única se nos queda corta con cinco pantallas, y organizar por feature no
-sirve porque hay piezas compartidas: el encabezado está en todas las pantallas
-autenticadas y todas usan el mismo login.
+La configuración vive en `playwright.config.ts`. Los helpers de API y los datos
+de prueba se mantienen en `fixtures/taskflow.ts`, donde se usan.
+
 
 ### Qué patrón usamos y dónde
 
 | Patrón | Dónde | Por qué |
 | --- | --- | --- |
-| Page Object | `LoginPage`, `ProjectsPage`, `BoardPage`, `MembersPage`, `TaskDetailPage` | Una clase por pantalla. Tienen lógica propia y poca repetición entre sí |
-| Component Object | `AppHeader`, `TaskCard`, `CommentItem`, `MemberItem` | Piezas que se repiten y que el frontend ya tiene como componentes |
-| Fixtures | `authenticatedUser`, `loggedInPage`, `seededProject`, `seededTask` | Todos los tests necesitan estado previo, y acá se arma y se limpia solo |
+| Page Object | `BoardPage`, `MembersPage`, `TaskDetailPage` | Una clase por pantalla. Tienen lógica propia y poca repetición entre sí |
+| Component Object | `AppHeader`, `TaskCard` | Piezas que se repiten y que el frontend ya tiene como componentes |
+| Fixtures | `owner`, `sesion`, `proyecto`, `tarea` | Todos los tests necesitan estado previo, y acá se arma y se limpia solo |
 | Screenplay | No lo usamos | Es para frameworks grandes con varios equipos. Demasiado setup para este proyecto |
 
-`AppHeader` es Component Object porque aparece en todas las pantallas. `TaskCard`,
-`CommentItem` y `MemberItem` están en una sola pantalla cada una, pero se repiten
-muchas veces dentro de ella, y cada instancia necesita su propio scope: con un
-componente que recibe la tarjeta como locator podemos afirmar sobre una sola sin que
-las otras molesten.
+`TaskCard` recibe un `Locator` que delimita una tarjeta. `BoardPage.tarjeta()`
+devuelve ese componente y delega en él las acciones y lecturas de sus campos.
+`AppHeader` recibe el locator del encabezado y expone el usuario y la navegación.
+El test de asignación comprueba el usuario conectado mediante este componente.
+Las aserciones permanecen en los tests.
 
 ### Preparar por API, validar por UI
 
@@ -56,14 +53,13 @@ Salvo los tests del login, ninguno se loguea por formulario: el fixture registra
 caso también se crean por API. La idea es usar la interfaz para validar lo que estamos
 probando y no para armar el escenario, que además es mucho más rápido.
 
-Para poder correr en paralelo (`fullyParallel: true`), cada test crea sus propios
-datos con nombres únicos y no depende de lo que haya creado otro.
+Cada test crea datos con nombres únicos. La suite corre en serie
+(`fullyParallel: false`, `workers: 1`) porque comparte un archivo SQLite y
+la escritura concurrente puede bloquear la base.
 
-### Qué va en cada carpeta de tests
-
-`e2e/` para flujos completos desde la UI, `api/` para contratos de endpoints y
-`hybrid/` para los que preparan por API y verifican por UI. No repetimos en Playwright
-los casos que ya cubre la suite de Jest.
+Los escenarios están directamente en `e2e/tests/`. Preparan los datos por API
+y verifican el comportamiento por UI. El login de esos escenarios se prepara
+mediante el fixture de sesión.
 
 ### Locators y aserciones
 
@@ -79,16 +75,18 @@ van en el test.
 
 ```ts
 retries: process.env.CI ? 2 : 0,
-workers: process.env.CI ? 2 : undefined,
-fullyParallel: true,
+workers: 1,
+fullyParallel: false,
 trace: 'on-first-retry',
 screenshot: 'only-on-failure',
-reporter: [['html'], ['junit', { outputFile: 'results.xml' }]],
+reporter: [['list'], ['html', { open: 'never' }]],
 ```
 
-Los reintentos van solo en CI, porque en local esconderían un bug real detrás de un
-segundo intento. Las traces y screenshots se guardan únicamente cuando algo falla. El
-reporte HTML es para mirarlo nosotros y el JUnit para que lo lea el pipeline.
+Los reintentos se habilitan en CI. La configuración captura la trace en el primer
+reintento, si lo hay, y las screenshots ante fallos. El workflow fuerza `--trace=on` para
+guardar traces de la corrida, y publica el reporte HTML y `test-results/` como
+artefactos incluso cuando falla un test. Playwright inicia API y cliente y
+espera sus URLs antes de ejecutar la suite.
 
 ## Consecuencias
 
