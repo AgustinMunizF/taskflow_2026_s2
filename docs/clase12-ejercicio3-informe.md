@@ -1,19 +1,17 @@
 # Ejercicio 3 · Informe de estado de TaskFlow
 
-**Fecha:** 16/11/2026 · **Lector:** quien decide si se libera
-**Base:** `main` en `fce9f42`, con los tests de US-16 ya mergeados (PR #15)
+**Fecha:** 17/11/2026 · **Lector:** quien decide si se libera
+**Base:** `main` en `5994e7d`, con los tests de US-16 ya mergeados (PR #15)
 
 ## Resumen
 
-Antes de mergear los tests de US-16, `main` estaba en verde, pero no porque la app
-estuviera libre de defectos: los que tenían test estaban marcados con `it.failing`, y el de
-la fecha de vencimiento no tenía ninguno. Con esos tests mergeados, en local fallan 13 de
-86: 12 por 3 defectos reales y 1 por una limitación de Windows. Hoy se corrigieron 6 de los
-10 issues de la clase 7, pero sigue abierto un defecto crítico de permisos.
+En GitHub Actions pasaron 82 de los 86 tests unitarios y de integración. Los cuatro
+fallos corresponden a US-16. Build del servidor, build del cliente, lint y E2E pasaron.
+Sigue abierto el defecto crítico que permite modificar tareas de proyectos ajenos.
 
 ## Estado contra los criterios de salida
 
-| Etapa                      | Antes (run #20) | Hoy (run #23) |
+| Etapa                      | Antes (run #20) | Actual (main) |
 | -------------------------- | --------------- | ------------- |
 | Build del servidor         | ✓               | ✓             |
 | Lint                       | ✓               | ✓             |
@@ -22,20 +20,18 @@ la fecha de vencimiento no tenía ninguno. Con esos tests mergeados, en local fa
 | Build del cliente          | ✓               | ✓             |
 | E2E (Playwright, Chromium) | ✓               | ✓             |
 
-- **Columnas:** run #20 es `main` antes del PR #15; run #23, después del merge.
-- **Lint:** se corrigió hoy (PR #12); en el Ejercicio 1A estaba en rojo.
-- **Tests:** en local (UTC-3), 73 de 86 en verde; los 13 rojos son tests de US-16. Uno es
-  la precondición de zona horaria, que falla porque Windows ignora el cambio de
-  `process.env.TZ`. En el CI deberían fallar menos, porque corre en UTC (ver riesgos).
-- **Cobertura:** 89,7 % de líneas y 63,8 % de ramas, por encima del umbral. El job falla
-  porque corre los tests y algunos están en rojo.
+- La primera columna corresponde al run #20, anterior al PR #15. La segunda recoge el resultado de la [corrida de Actions en `5994e7d`](https://github.com/AgustinMunizF/taskflow_2026_s2/actions/runs/43973100246).
+- **Lint:** se corrigió (PR #12); en el Ejercicio 1A estaba en rojo.
+- **Tests.** Dos pruebas de CA8 recibieron `200` al modificar el vencimiento desde una cuenta ajena al proyecto. Ambas esperaban `403`. En CA6, una fecha inexistente devolvió `201` cuando se esperaba `400`. En CA3 falló la precondición del test que verifica el cambio de huso horario.
+- **Cobertura.** El job vuelve a ejecutar la suite y falla por los mismos cuatro tests. La medición registrada supera los umbrales de líneas (70 %) y ramas (40 %).
+- **E2E.** La suite de Chromium verifica que retirar un miembro desasigne sus tareas en ese proyecto y que repetir una etiqueta, incluso con distintas mayúsculas, deje una sola copia. Los tres escenarios pasaron. [Prueba de miembros](../e2e/tests/us14-asignar.spec.ts) · [Pruebas de etiquetas](../e2e/tests/us15-etiquetas.spec.ts)
 
 ## Métricas
 
 | Métrica                            | Valor                           |
 | ---------------------------------- | ------------------------------- |
 | Defectos abiertos por severidad    | 2 críticos · 2 altos · 3 medios |
-| Criterios de US-16 sin tests rojos | 1 de 8 (CA4)                    |
+| Criterios de US-16 sin tests rojos | 1 de 8 en la corrida local en UTC−3 (CA4)                    |
 | Duración del pipeline              | 2 min 9 s                       |
 
 - **Defectos por severidad:** decide sola; un crítico abierto alcanza para no liberar.
@@ -63,14 +59,11 @@ del CI.
 
 Los issues son los de `docs/issues-clase7.md`; los tests de US-05, US-12 y US-13 están
 marcados con `it.failing`. Quedan además dos hallazgos de accesibilidad (ACC-02 y ACC-03).
-**Corregidos hoy:** issues 2, 3, 4, 8, 9 y 10 de la clase 7 (PRs #12 a #14).
+**Corregidos en los PRs #12 a #14:** issues 2, 3, 4, 8, 9 y 10 de la clase 7.
 
 ## Riesgos sin mitigar
 
-- **El CI no ve el bug de la fecha.** Corre en UTC, donde la fecha vuelve bien; solo lo
-  detectan los tests de CA3, que cambian la zona horaria. En Uruguay (UTC-3) se ve siempre.
-- **Arreglos sin test de regresión.** La normalización de etiquetas y la desasignación al
-  retirar un miembro se corrigieron sin tests nuevos: nada avisa si se rompen de nuevo.
+- **Vencimientos en Uruguay.** Los E2E pasan en UTC. En Montevideo, el detalle y el tablero muestran el día anterior al guardado. La prueba CA3 de CI falla al preparar el cambio de huso horario.
 - **Los defectos no están en GitHub Issues.** Están solo en `docs/`, sin estado ni
   responsable.
 - **`proxy-addr`** (crítica según `npm audit`) sigue sin `npm audit fix`, aunque el riesgo
