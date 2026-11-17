@@ -264,3 +264,7 @@ Referencias de las correcciones integradas:
 Los reportes conservan las observaciones originales para mantener la evidencia
 histórica. Al crear los tickets de hallazgos corregidos, registrar el PR y cerrarlos
 con el motivo de resolución.
+
+Verificado el 17/11/2026 mediante la API del repositorio: `has_issues=false`.
+La cuenta conectada tiene permiso de escritura y triage, pero carece de administración.
+Un administrador debe habilitar **Settings → General → Features → Issues** antes de crear los tickets.
