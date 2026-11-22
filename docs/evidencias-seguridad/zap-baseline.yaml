@@ -1,0 +1,42 @@
+env:
+  contexts:
+    - name: TaskFlow local
+      urls:
+        - http://localhost:5173
+        - http://localhost:3000/api/health
+      includePaths:
+        - http://localhost:5173/.*
+        - http://localhost:3000/api/.*
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+jobs:
+  - type: passiveScan-config
+    parameters:
+      scanOnlyInScope: true
+  - type: spider
+    parameters:
+      context: TaskFlow local
+      url: http://localhost:5173
+      maxDuration: 1
+  - type: requestor
+    requests:
+      - url: http://localhost:3000/api/health
+        method: GET
+      - url: http://localhost:3000/api/projects
+        method: GET
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: docs/evidencias-seguridad
+      reportFile: zap-baseline.html
+      reportTitle: TaskFlow - baseline local sin autenticación
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: docs/evidencias-seguridad
+      reportFile: zap-baseline.json

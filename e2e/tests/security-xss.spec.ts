@@ -35,7 +35,7 @@ test('el titulo de una tarea no se ejecuta como HTML (XSS almacenado)', async ({
   // Act + Assert: el tablero lo muestra como texto, no como etiqueta.
   const tablero = new BoardPage(sesion);
   await tablero.ir(proyecto.id);
-  await expect(tablero.tarjeta(PAYLOAD).getByTestId('task-card-title')).toHaveText(PAYLOAD);
+  await expect(tablero.tarjeta(PAYLOAD).titulo).toHaveText(PAYLOAD);
   await expect(sesion.locator('img[src="x"]')).toHaveCount(0);
 
   // Y el detalle tampoco lo ejecuta.

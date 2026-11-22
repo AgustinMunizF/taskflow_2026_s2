@@ -46,11 +46,26 @@ describe('Tareas', () => {
       .set(auth(token))
       .send({ title: 'Segunda tarea' });
 
+    const otra = await request(app)
+      .post(`/api/projects/${project.id}/tasks`)
+      .set(auth(token))
+      .send({ title: 'Tarea en progreso' });
+    const cambio = await request(app)
+      .patch(`/api/tasks/${otra.body.id}`)
+      .set(auth(token))
+      .send({ status: 'IN_PROGRESS' });
+    expect(cambio.status).toBe(200);
+
     const res = await request(app)
       .get(`/api/projects/${project.id}/tasks?status=TODO`)
       .set(auth(token));
 
+    expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(2);
+    for (const item of res.body.items) {
+      expect(item.status).toBe('TODO');
+      expect(item.id).not.toBe(otra.body.id);
+    }
   });
 
   it('combina dos filtros a la vez en vez de aplicar solo el ultimo', async () => {

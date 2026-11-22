@@ -57,18 +57,20 @@ No hay `helmet` y el CORS es `cors()` sin opciones. Salida de `curl.exe -I http:
 
 | Header                        | Valor                                       |
 | ----------------------------- | ------------------------------------------- |
-| `Content-Security-Policy`     | no aparece — sin mitigación de XSS          |
-| `Strict-Transport-Security`   | no aparece — no se fuerza HTTPS             |
-| `X-Frame-Options`             | no aparece — clickjacking posible           |
+| `Content-Security-Policy`     | no aparece — política ausente en esa respuesta          |
+| `Strict-Transport-Security`   | no aparece — verificar en despliegue HTTPS             |
+| `X-Frame-Options`             | no aparece — verificar en respuestas HTML           |
 | `X-Content-Type-Options`      | no aparece — falta `nosniff`                |
 | `X-Powered-By`                | `Express` — sobra, revela la tecnología     |
-| `Access-Control-Allow-Origin` | `*` — cualquier sitio puede llamar a la API |
+| `Access-Control-Allow-Origin` | `*` — lectura CORS permitida desde otros orígenes |
 
 Los mismos seis valores se repiten en el endpoint protegido `GET /api/projects` con el token de
 Ana: la configuración es global, no cambia entre rutas públicas y autenticadas.
 
-**Impacto:** sin ser explotable por sí solo, elimina las defensas del navegador y amplifica
-cualquier otro fallo.
+**Impacto observado:** configuración HTTP permisiva. La respuesta JSON de la API
+no demuestra clickjacking ni XSS. El acceso a recursos autenticados sigue requiriendo
+un token válido. HSTS debe evaluarse en un despliegue HTTPS. Las políticas de
+enmarcado y CSP deben comprobarse sobre las respuestas HTML del cliente.
 
 **Remediación:** `app.use(helmet())` y CORS con una lista explícita de orígenes.
 
@@ -141,3 +143,107 @@ tareas **para** que nadie ajeno altere ni destruya el trabajo de mi equipo.
 - **CA-01:** `npx playwright test a11y` no reporta violaciones de la regla `label` en ninguna vista.
 - **CA-02:** el test de verificación de `a11y.spec.ts` pasa en verde.
 - **CA-03:** los `data-testid` no cambian y la suite E2E existente sigue dando los mismos resultados.
+
+### Seguridad (SEC-02)
+
+Como responsable de la aplicación quiero configurar las cabeceras y los orígenes
+permitidos para aplicar las defensas del navegador previstas para el despliegue.
+
+- CA-01. Las respuestas de la API incluyen `X-Content-Type-Options: nosniff` y omiten `X-Powered-By`.
+- CA-02. Un preflight desde el origen autorizado del cliente devuelve ese origen en `Access-Control-Allow-Origin`. Un origen ajeno carece de autorización CORS.
+- CA-03. En el despliegue HTTPS, las respuestas incluyen HSTS. La configuración se verifica sobre la URL HTTPS.
+- CA-04. Las respuestas HTML del cliente incluyen una política CSP y una política contra enmarcado, y los flujos de login y tareas siguen funcionando.
+
+### Accesibilidad (ACC-02)
+
+Como persona que navega con lector de pantalla quiero títulos específicos para
+identificar la pantalla y el proyecto que estoy usando.
+
+- CA-01. Login, Registro y Proyectos tienen títulos distintos que incluyen el nombre de la vista y TaskFlow.
+- CA-02. El tablero incluye el nombre del proyecto y el detalle incluye el título de la tarea en `document.title`.
+- CA-03. Al navegar sin recargar y al volver con el botón Atrás, el título corresponde a la vista mostrada.
+
+### Accesibilidad (ACC-03)
+
+Como persona que usa lector de pantalla quiero recibir confirmaciones de las
+acciones exitosas para saber que mis cambios se guardaron.
+
+- CA-01. Guardar una tarea actualiza una región con `role="status"` con una confirmación textual.
+- CA-02. Publicar un comentario y agregar o quitar un miembro actualizan esa región con un mensaje que identifica la operación.
+- CA-03. La confirmación se anuncia con lector de pantalla sin mover el foco. Si la solicitud falla, se anuncia el error y se omite la confirmación de éxito.
+
+
+## 6. Evaluación CVSS 3.1
+
+Evaluación del 17/11/2026. La prioridad de remediación del equipo y la categoría
+CVSS se registran por separado. Se usó la fórmula Base de FIRST, con alcance
+sin cambios. [Especificación CVSS 3.1](https://www.first.org/cvss/v3.1/specification-document)
+
+### SEC-01
+
+**CVSS 3.1 Base 8.3, alta.**
+Vector `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:H`.
+
+Se accede por HTTP (AV:N), basta conocer el ID de una tarea (AC:L), se requiere
+una cuenta registrada (PR:L) y no interviene la víctima (UI:N). El impacto queda
+dentro de TaskFlow (S:U). La respuesta de edición devuelve datos de la tarea ajena
+(C:L), permite alterar sus campos (I:H) y eliminarla con sus datos asociados (A:H).
+La pérdida de disponibilidad se refiere al recurso eliminado.
+El equipo conserva prioridad crítica de remediación por el acceso entre proyectos.
+[Vector en la calculadora](https://www.first.org/cvss/calculator/3.1#CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:H)
+
+Cálculo reproducible: impacto = 5.45052864, explotabilidad = 2.83525473.
+La suma 8.28578337 se redondea hacia arriba a un decimal, dando 8.3.
+
+### SEC-02
+
+**Puntaje provisional 0.0, con impacto directo sin demostrar.**
+Vector de referencia `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N`.
+Con C, I y A en None, la fórmula da 0.0. Esto expresa el alcance de la evidencia
+actual y requiere revisión si se demuestra un camino de explotación.
+[Vector en la calculadora](https://www.first.org/cvss/calculator/3.1#CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N)
+
+| Observación | Evaluación del impacto |
+| --- | --- |
+| CORS con origen comodín | El baseline ve dos respuestas públicas o sin autenticar. Falta demostrar lectura de datos privados desde otro origen. |
+| X-Powered-By | Revela Express. Se registra como divulgación informativa de tecnología. |
+| Falta nosniff | Requiere una respuesta controlable y un escenario de interpretación indebida para demostrar impacto. |
+| CSP y enmarcado | Evaluar en el HTML del cliente. La ausencia en JSON por sí sola no demuestra XSS o clickjacking. |
+| HSTS | La prueba local usa HTTP. Queda pendiente la evaluación del despliegue HTTPS. |
+
+La clasificación MEDIUM original se conserva como prioridad interna de endurecimiento.
+Las alertas de ZAP llevan su propia severidad y no equivalen automáticamente a un CVSS.
+
+## 7. Baseline ZAP
+
+Se ejecutó el 17/11/2026 con ZAP 2.17.0 y Java 24.0.1 sobre Vite en
+`localhost:5173` y la API en `localhost:3000`, sin autenticación.
+El Automation Framework ejecutó spider de hasta un minuto y análisis pasivo,
+con espera de finalización y generación de reportes. No se configuró activeScan.
+El rastreo encontró 436 URLs y el plan terminó correctamente.
+
+Se usó la distribución Java porque el daemon Docker local devolvía un error.
+El plan reproduce las etapas de un baseline mediante Automation Framework.
+[Baseline oficial](https://www.zaproxy.org/docs/docker/baseline-scan/) ·
+[Automation Framework](https://www.zaproxy.org/docs/automate/automation-framework/)
+
+Evidencia conservada en [reporte HTML](evidencias-seguridad/zap-baseline.html),
+[resultado JSON](evidencias-seguridad/zap-baseline.json) y
+[plan YAML](evidencias-seguridad/zap-baseline.yaml).
+Las instrucciones de ejecución están en el [README](evidencias-seguridad/README.md).
+
+| Hallazgo ZAP | Relación con las pruebas manuales |
+| --- | --- |
+| CORS permisivo (10098), API, media | Coincide con SEC-02 en dos respuestas. |
+| X-Powered-By (10037), API, baja | Confirma divulgación de Express. |
+| Falta nosniff (10021), API, baja | Confirma la ausencia del header en una respuesta. |
+| Cuatro variantes de CSP (10055), cliente, medias | Señalan comodines, inline y directivas faltantes. Amplían SEC-02 sobre el HTML de desarrollo. |
+| Divulgación de errores (90022), cliente, baja | Cuatro respuestas de desarrollo requieren revisión específica antes de desplegar. |
+| Timestamps (10096), cliente, baja | Cinco instancias de información temporal. |
+| Content-Type, comentarios y aplicación moderna | Alertas informativas para revisión. |
+
+El reporte contiene 12 entradas de alerta por sitio, con 5 medias, 4 bajas y
+3 informativas. Algunas comparten el mismo ID de regla. Se ejecutó sobre el servidor
+de desarrollo y el spider tradicional no cubre todos los flujos de una SPA.
+SEC-01 requiere las pruebas autenticadas de dos usuarios ya documentadas.
+El resultado pasivo no verifica la corrección de permisos ni reemplaza esas pruebas.

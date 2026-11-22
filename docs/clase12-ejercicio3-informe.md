@@ -1,78 +1,50 @@
-# Ejercicio 3 · Informe de estado de TaskFlow
+# Informe de estado de TaskFlow
 
-**Fecha:** 17/11/2026 · **Lector:** quien decide si se libera
-**Base:** `main` en `5994e7d`, con los tests de US-16 ya mergeados (PR #15)
+17/11/2026 · Destinatario: responsable de liberación.
+Base evaluada: `main` en `5994e7d`, con los tests de US-16 del PR #15.
 
-## Resumen
+**Decisión propuesta: no liberar.** Un usuario registrado puede modificar y eliminar
+tareas de proyectos ajenos. Además, en Montevideo el vencimiento se muestra un día
+antes del guardado.
 
-En GitHub Actions pasaron 82 de los 86 tests unitarios y de integración. Los cuatro
-fallos corresponden a US-16. Build del servidor, build del cliente, lint y E2E pasaron.
-Sigue abierto el defecto crítico que permite modificar tareas de proyectos ajenos.
+## Estado de las verificaciones
 
-## Estado contra los criterios de salida
+| Verificación | Resultado |
+| --- | --- |
+| Builds del servidor y cliente | Pasan |
+| Lint | Pasa |
+| Tests unitarios e integración | 82 de 86 pasan |
+| Cobertura | Supera 70 % de líneas y 40 % de ramas; job rojo por los tests |
+| E2E Chromium en UTC | 25 de 25 pasan |
 
-| Etapa                      | Antes (run #20) | Actual (main) |
-| -------------------------- | --------------- | ------------- |
-| Build del servidor         | ✓               | ✓             |
-| Lint                       | ✓               | ✓             |
-| Tests                      | ✓               | ✗             |
-| Cobertura (umbral 70 / 40) | ✓               | ✗             |
-| Build del cliente          | ✓               | ✓             |
-| E2E (Playwright, Chromium) | ✓               | ✓             |
+La [corrida de Actions](https://github.com/AgustinMunizF/taskflow_2026_s2/actions/runs/43973100246)
+registra cuatro fallos en US-16. Dos reciben 200 al modificar una tarea ajena cuando
+se esperaba 403. Otro acepta una fecha inexistente (201 en lugar de 400).
+El cuarto falla en la precondición del cambio de huso horario del test.
 
-- La primera columna corresponde al run #20, anterior al PR #15. La segunda recoge el resultado de la [corrida de Actions en `5994e7d`](https://github.com/AgustinMunizF/taskflow_2026_s2/actions/runs/43973100246).
-- **Lint:** se corrigió (PR #12); en el Ejercicio 1A estaba en rojo.
-- **Tests.** Dos pruebas de CA8 recibieron `200` al modificar el vencimiento desde una cuenta ajena al proyecto. Ambas esperaban `403`. En CA6, una fecha inexistente devolvió `201` cuando se esperaba `400`. En CA3 falló la precondición del test que verifica el cambio de huso horario.
-- **Cobertura.** El job vuelve a ejecutar la suite y falla por los mismos cuatro tests. La medición registrada supera los umbrales de líneas (70 %) y ramas (40 %).
-- **E2E.** La suite de Chromium verifica que retirar un miembro desasigne sus tareas en ese proyecto y que repetir una etiqueta, incluso con distintas mayúsculas, deje una sola copia. Los tres escenarios pasaron. [Prueba de miembros](../e2e/tests/us14-asignar.spec.ts) · [Pruebas de etiquetas](../e2e/tests/us15-etiquetas.spec.ts)
+## Defectos y riesgos
 
-## Métricas
+Hay siete defectos funcionales y de configuración registrados: dos críticos,
+dos altos y tres medios. Los críticos son editar y borrar tareas ajenas.
+Los altos son el desplazamiento del vencimiento y permitir un estado inicial
+distinto de TODO. Los medios son aceptar fechas inexistentes, listar proyectos
+sin paginación y la configuración de seguridad HTTP. Quedan también dos
+hallazgos de accesibilidad.
 
-| Métrica                            | Valor                           |
-| ---------------------------------- | ------------------------------- |
-| Defectos abiertos por severidad    | 2 críticos · 2 altos · 3 medios |
-| Criterios de US-16 sin tests rojos | 1 de 8 en la corrida local en UTC−3 (CA4)                    |
-| Duración del pipeline              | 2 min 9 s                       |
+Los PR #13 y #14 corrigieron recuperación de cuenta, desasignación al retirar un
+miembro y duplicación de etiquetas. Los E2E existentes verifican los dos últimos
+arreglos. El PR #12 corrigió lint.
 
-- **Defectos por severidad:** decide sola; un crítico abierto alcanza para no liberar.
-- **Criterios sin tests rojos:** mide lo que recibe el usuario, no las líneas que recorre
-  un test. En 6 de los 7 criterios con rojos, al menos uno es el bug de la fecha.
-- **Duración del pipeline:** el job más largo es E2E (126 s). Si crece mucho, el equipo
-  deja de esperarlo antes de mergear. Hoy no hace falta actuar.
+La cobertura supera los umbrales, pero los tests todavía demuestran defectos
+críticos. La ejecución E2E en UTC oculta el desplazamiento de fechas observado
+en Montevideo. Solo se verificó Chromium.
 
-**Descartada: cobertura de líneas.** En el 2b se sumaron 10 tests que encontraron un
-defecto nuevo, y las líneas no se movieron (89,58 % antes y después). Y con casi 90 % hay
-un defecto crítico abierto. Se ve bien pero no cambia la decisión: queda solo como umbral
-del CI.
+## Condiciones para reconsiderar la liberación
 
-## Defectos abiertos
+Corregir los permisos de edición y borrado, demostrar que el intento ajeno no
+modifica datos y verificar vencimientos en UTC y Montevideo. Los tests de esas
+reglas deben pasar como pruebas normales. Los defectos restantes requieren
+responsable y decisión explícita sobre su aceptación.
 
-| Severidad | Defecto                                | Evidencia                       |
-| --------- | -------------------------------------- | ------------------------------- |
-| Crítica   | Usuario ajeno edita tareas (SEC-01)    | Issue 6 · US-12 CA5 · US-16 CA8 |
-| Crítica   | Usuario ajeno elimina tareas (SEC-01)  | Issue 7 · US-13 CA1             |
-| Alta      | Vencimiento vuelve un día antes        | Issue 1 · US-16                 |
-| Alta      | Se puede forzar el estado inicial      | Issue 5 · US-05 CA3             |
-| Media     | Se aceptan fechas inexistentes         | Nuevo (2b) · US-16 CA6          |
-| Media     | `GET /api/projects` no pagina          | Clase 8 (k6)                    |
-| Media     | Sin headers de seguridad, CORS abierto | SEC-02                          |
-
-Los issues son los de `docs/issues-clase7.md`; los tests de US-05, US-12 y US-13 están
-marcados con `it.failing`. Quedan además dos hallazgos de accesibilidad (ACC-02 y ACC-03).
-**Corregidos en los PRs #12 a #14:** issues 2, 3, 4, 8, 9 y 10 de la clase 7.
-
-## Riesgos sin mitigar
-
-- **Vencimientos en Uruguay.** Los E2E pasan en UTC. En Montevideo, el detalle y el tablero muestran el día anterior al guardado. La prueba CA3 de CI falla al preparar el cambio de huso horario.
-- **Los defectos no están en GitHub Issues.** Están solo en `docs/`, sin estado ni
-  responsable.
-- **`proxy-addr`** (crítica según `npm audit`) sigue sin `npm audit fix`, aunque el riesgo
-  real es bajo.
-- **E2E solo en Chromium.** No hay evidencia en Firefox ni en WebKit.
-
-## Recomendación: no liberar
-
-Cualquier usuario registrado puede editar y borrar tareas de proyectos ajenos (SEC-01), y
-las fechas de vencimiento se muestran mal a todos los usuarios en Uruguay. Se puede pasar a
-**liberar con riesgos** cuando esos dos defectos estén corregidos y sus tests en verde; los
-defectos medios pueden quedar como riesgos aceptados.
+Los detalles reproducibles y el estado de seguimiento están en [bugs de clase 7](issues-clase7.md),
+[performance](issues-clase8.md) y [seguridad y accesibilidad](clase12-m2-reporte.md).
