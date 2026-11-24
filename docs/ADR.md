@@ -28,7 +28,8 @@ e2e/
 
 Esta estructura refleja lo implementado en el repositorio. No se agregan carpetas
 `api/`, `config/` ni `test-data/` porque no existen como capas separadas; los datos,
-tokens y llamadas HTTP se encuentran en `e2e/fixtures/taskflow.ts`.
+tokens y llamadas HTTP se encuentran en `e2e/fixtures/taskflow.ts`. La única excepción
+es `security-xss.spec.ts`, que crea por API la tarea con el payload a probar.
 
 ### Patrones implementados
 
@@ -57,17 +58,21 @@ los endpoints respectivos, y cargan el token en `localStorage` con `iniciarSesio
 Los tests usan la UI para verificar el flujo seleccionado y la API solo para preparar
 el estado cuando es necesario.
 
-Cada fixture usa datos únicos por registro. Esto evita compartir nombres o proyectos
-entre casos, aunque la ejecución permanece serial por restricciones de SQLite.
+Cada test registra su propio usuario, con un email único, y crea su propio proyecto y
+tarea. Los nombres de proyecto y tarea se repiten, pero cada registro pertenece a un
+usuario distinto, así que los casos no comparten datos. La ejecución igual es serial
+por restricciones de SQLite.
 
 ### Locators y aserciones
 
-La preferencia es `getByRole`, `getByLabel` y `getByText`; después se usa
-`getByTestId` sobre los identificadores existentes. Las aserciones permanecen en los
-tests y los Page/Component Objects solo contienen locators y acciones.
+Los locators usan `getByTestId` sobre los `data-testid` que ya tiene el frontend. Los
+únicos selectores CSS son el de errores de `TaskDetailPage`, que todavía admite la clase
+`.error` junto con `role="alert"`, y el de `security-xss.spec.ts`, que busca una imagen
+inyectada. Las aserciones permanecen en los tests y los Page/Component Objects solo
+contienen locators y acciones.
 
-Se evitan las esperas manuales y los selectores por posición. El selector de errores
-en `TaskDetailPage` todavía admite la clase `.error` junto con `role="alert"`.
+No hay esperas manuales. Los selectores por posición se limitan a tres `.first()`: quitar
+la primera etiqueta en `TaskDetailPage` y esperar las primeras tarjetas en `a11y.spec.ts`.
 
 ### Configuración de ejecución
 
